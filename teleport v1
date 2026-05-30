@@ -1,0 +1,206 @@
+-- ============================================
+-- AIRSHIP TELEPORTER v1.0
+-- Телепорт с дирижаблем на сохранённые координаты
+-- ============================================
+
+local player = game.Players.LocalPlayer
+
+-- НАСТРОЙКИ (замени на свои координаты!)
+local ISLANDS = {
+    {name = "Остров 1 - Железная шахта", pos = Vector3.new(0, 100, 0)},
+    {name = "Остров 2 - Доки", pos = Vector3.new(1000, 100, 500)},
+    {name = "Остров 3 - Лес", pos = Vector3.new(-800, 100, -600)},
+    -- Добавь свои острова сюда!
+}
+
+-- GUI
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "AirshipTeleporter"
+screenGui.Parent = game.CoreGui
+
+local mainFrame = Instance.new("Frame")
+mainFrame.Parent = screenGui
+mainFrame.Size = UDim2.new(0, 320, 0, 450)
+mainFrame.Position = UDim2.new(0.5, -160, 0.5, -225)
+mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+mainFrame.BorderSizePixel = 0
+mainFrame.Active = true
+mainFrame.Draggable = true
+
+local corners = Instance.new("UICorner")
+corners.Parent = mainFrame
+corners.CornerRadius = UDim.new(0, 10)
+
+-- Заголовок
+local titleBar = Instance.new("Frame")
+titleBar.Parent = mainFrame
+titleBar.Size = UDim2.new(1, 0, 0, 35)
+titleBar.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+
+local title = Instance.new("TextLabel")
+title.Parent = titleBar
+title.Size = UDim2.new(1, -60, 1, 0)
+title.Position = UDim2.new(0, 10, 0, 0)
+title.Text = "🚢 ТЕЛЕПОРТ НА ОСТРОВА"
+title.TextColor3 = Color3.fromRGB(255, 255, 255)
+title.TextXAlignment = Enum.TextXAlignment.Left
+title.BackgroundTransparency = 1
+
+local closeBtn = Instance.new("TextButton")
+closeBtn.Parent = titleBar
+closeBtn.Size = UDim2.new(0, 30, 1, 0)
+closeBtn.Position = UDim2.new(1, -30, 0, 0)
+closeBtn.Text = "✕"
+closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+closeBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+
+-- Контент (список островов)
+local scrollFrame = Instance.new("ScrollingFrame")
+scrollFrame.Parent = mainFrame
+scrollFrame.Size = UDim2.new(1, -20, 1, -55)
+scrollFrame.Position = UDim2.new(0, 10, 0, 45)
+scrollFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+scrollFrame.ScrollBarThickness = 6
+
+local container = Instance.new("Frame")
+container.Parent = scrollFrame
+container.Size = UDim2.new(1, 0, 0, 0)
+container.BackgroundTransparency = 1
+container.AutomaticSize = Enum.AutomaticSize.Y
+
+-- Функция телепорта
+local function teleportTo(pos, extraHeight)
+    extraHeight = extraHeight or 100  -- +100 стадов высоты по умолчанию
+    local char = player.Character
+    if char and char:FindFirstChild("HumanoidRootPart") then
+        char.HumanoidRootPart.CFrame = CFrame.new(pos.X, pos.Y + extraHeight, pos.Z)
+    end
+end
+
+-- Создание кнопок для каждого острова
+local yOffset = 5
+for i, island in ipairs(ISLANDS) do
+    local btnFrame = Instance.new("Frame")
+    btnFrame.Parent = container
+    btnFrame.Size = UDim2.new(1, 0, 0, 70)
+    btnFrame.Position = UDim2.new(0, 0, 0, yOffset)
+    btnFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+    
+    local btnCorners = Instance.new("UICorner")
+    btnCorners.Parent = btnFrame
+    btnCorners.CornerRadius = UDim.new(0, 6)
+    
+    local nameLabel = Instance.new("TextLabel")
+    nameLabel.Parent = btnFrame
+    nameLabel.Size = UDim2.new(1, -10, 0, 25)
+    nameLabel.Position = UDim2.new(0, 5, 0, 5)
+    nameLabel.Text = island.name
+    nameLabel.TextColor3 = Color3.fromRGB(255, 200, 100)
+    nameLabel.BackgroundTransparency = 1
+    nameLabel.TextXAlignment = Enum.TextXAlignment.Left
+    
+    local coordsLabel = Instance.new("TextLabel")
+    coordsLabel.Parent = btnFrame
+    coordsLabel.Size = UDim2.new(1, -10, 0, 20)
+    coordsLabel.Position = UDim2.new(0, 5, 0, 30)
+    coordsLabel.Text = string.format("X: %.1f  Y: %.1f  Z: %.1f", island.pos.X, island.pos.Y, island.pos.Z)
+    coordsLabel.TextSize = 11
+    coordsLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
+    coordsLabel.BackgroundTransparency = 1
+    coordsLabel.TextXAlignment = Enum.TextXAlignment.Left
+    
+    local tpBtn = Instance.new("TextButton")
+    tpBtn.Parent = btnFrame
+    tpBtn.Size = UDim2.new(0, 80, 0, 35)
+    tpBtn.Position = UDim2.new(1, -85, 0, 17)
+    tpBtn.Text = "ТЕЛЕПОРТ"
+    tpBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 200)
+    
+    local btnCorners2 = Instance.new("UICorner")
+    btnCorners2.Parent = tpBtn
+    btnCorners2.CornerRadius = UDim.new(0, 6)
+    
+    tpBtn.MouseButton1Click:Connect(function()
+        teleportTo(island.pos, 100)
+        statusText.Text = "✅ Телепорт на " .. island.name
+        task.wait(2)
+        statusText.Text = "Готов"
+    end)
+    
+    yOffset = yOffset + 75
+end
+
+-- Кнопка "Добавить текущие координаты"
+local addFrame = Instance.new("Frame")
+addFrame.Parent = container
+addFrame.Size = UDim2.new(1, 0, 0, 90)
+addFrame.Position = UDim2.new(0, 0, 0, yOffset)
+addFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+
+local addTitle = Instance.new("TextLabel")
+addTitle.Parent = addFrame
+addTitle.Size = UDim2.new(1, -10, 0, 25)
+addTitle.Position = UDim2.new(0, 5, 0, 5)
+addTitle.Text = "➕ ДОБАВИТЬ ТЕКУЩУЮ ПОЗИЦИЮ"
+addTitle.TextColor3 = Color3.fromRGB(200, 200, 200)
+addTitle.BackgroundTransparency = 1
+
+local addNameInput = Instance.new("TextBox")
+addNameInput.Parent = addFrame
+addNameInput.Size = UDim2.new(1, -100, 0, 30)
+addNameInput.Position = UDim2.new(0, 5, 0, 35)
+addNameInput.PlaceholderText = "Название острова"
+addNameInput.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+
+local addBtn = Instance.new("TextButton")
+addBtn.Parent = addFrame
+addBtn.Size = UDim2.new(0, 80, 0, 35)
+addBtn.Position = UDim2.new(1, -85, 0, 32)
+addBtn.Text = "ДОБАВИТЬ"
+addBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 150)
+
+local statusText = Instance.new("TextLabel")
+statusText.Parent = addFrame
+statusText.Size = UDim2.new(1, -10, 0, 20)
+statusText.Position = UDim2.new(0, 5, 0, 70)
+statusText.Text = "Готов"
+statusText.TextSize = 11
+statusText.BackgroundTransparency = 1
+
+-- Добавление новой точки
+addBtn.MouseButton1Click:Connect(function()
+    local char = player.Character
+    if char and char:FindFirstChild("HumanoidRootPart") then
+        local pos = char.HumanoidRootPart.Position
+        local name = addNameInput.Text
+        if name == "" then
+            name = "Новая точка"
+        end
+        
+        table.insert(ISLANDS, {
+            name = name,
+            pos = Vector3.new(pos.X, pos.Y, pos.Z)
+        })
+        
+        statusText.Text = "✅ Точка добавлена! Перезапусти скрипт для обновления списка"
+    else
+        statusText.Text = "❌ Не удалось получить координаты"
+    end
+end)
+
+-- Настройка размеров
+local function updateSize()
+    local totalHeight = yOffset + 100
+    container.Size = UDim2.new(1, 0, 0, totalHeight)
+    scrollFrame.CanvasSize = UDim2.new(0, 0, 0, totalHeight + 20)
+end
+
+updateSize()
+container:GetPropertyChangedSignal("Size"):Connect(updateSize)
+
+closeBtn.MouseButton1Click:Connect(function()
+    screenGui:Destroy()
+end)
+
+print("✅ AIRSHIP TELEPORTER загружен!")
+print("💡 Добавь свои острова в список ISLANDS в начале скрипта")
